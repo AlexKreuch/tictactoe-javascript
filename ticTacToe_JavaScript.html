@@ -1,0 +1,654 @@
+<!DOCTYPE html> 
+<div>
+<canvas id="theCanv" height="400" usemap="#theMap" ></canvas>
+</div>
+
+
+
+	<script>
+
+	console.log("RUNNING SCRIPT 01");
+	var tools = {
+		mkDrawSpecs:mkDrawSpecs,
+		drawBoard:function(dsps)
+				{
+					// DrawTheBoard(canv,color,thickness,gap,scale,posx,posy)
+					var canv = dsps.canv;
+					var sp = dsps.brdSp;
+					DrawTheBoard(canv,sp.co,sp.th,sp.ga,sp.sc,sp.px,sp.py);
+				},
+		drawO:function(dsps,i)
+				{
+					// drawCircle(canv,pen,color,n,r,x,y)
+					var xp = dsps.posList[i][0];
+					var yp = dsps.posList[i][1];
+					drawCircle(dsps.canv,dsps.pencilSize,dsps.pencilColor,dsps.res,dsps.circleRad,xp,yp);
+				},
+		drawX:function(dsps,i)
+				{
+//                                         console.log("   NOTE : i="+i+" in drawX");
+					//drawX(canv,pen,color,n,size,x,y)
+					var xp = dsps.posList[i][0];
+					var yp = dsps.posList[i][1];
+					drawX(dsps.canv,dsps.pencilSize,dsps.pencilColor,dsps.res,dsps.xSize,xp,yp);
+				},
+		setupListener:setupListener
+			};
+
+	
+
+
+	
+	function mkDrawSpecs(canv,color1,color2,thickness1,thickness2,res,size,scaler,posx,posy){
+		var boardSpecs = {
+					co:color1,
+					th:thickness1,
+					ga:1/3,
+					sc:size,
+					px:posx,
+					py:posy
+				};
+		var squareCenters = [];
+		var spacer = size/6;
+		for(i=0; i<9; i++)
+		{
+			var tmp0 = []; var tmp1=0; var tmp2=0;
+			for(k=0;k<2;k++)
+			{
+				switch(k){ case 0: tmp1=i%3; tmp2=posx; break; case 1: tmp1=Math.floor(i/3); tmp2=posy; break; }
+				tmp1 = (2*tmp1)+1;
+				tmp1 = spacer*tmp1;
+				tmp0[k]=tmp1+tmp2;
+			}
+			squareCenters[i] = tmp0;
+			
+		}
+		
+		var circleRad = (size*scaler)/6;
+		
+		var xSize = (size*scaler)/3;
+
+		return {
+				canv:canv,
+				pencilSize:thickness2,
+				pencilColor:color2,
+				posList:squareCenters,
+				res:res,
+				brdSp:boardSpecs,
+				circleRad:circleRad,
+				xSize:xSize
+			};
+		
+	}
+
+	function drawX(canv,pen,color,n,size,x,y){
+		var cancon = canv.getContext("2d");
+		var saveColor = cancon.fillStyle;
+		cancon.fillStyle = color;
+
+		var tmp0 = size/2; var tmp1 = size/n; var N=2*n; var j=0;
+
+		for(i=0; i<N; i++)
+		{
+			if(i<n)
+			{
+				cancon.fillRect( x - tmp0 + (i*tmp1) , y - tmp0 + (i*tmp1) , pen , pen );
+			}
+			else
+			{
+				j = i-n;
+				cancon.fillRect( x - tmp0 + (j*tmp1) , y + tmp0 - (j*tmp1) , pen , pen );
+			}
+		}
+
+		cancon.fillStyle = saveColor;
+	}
+
+	// draw the empty-hash
+	function DrawTheBoard(canv,color,thickness,gap,scale,posx,posy){
+		var cancon = canv.getContext("2d");
+		var saveColor = cancon.fillStyle;
+		cancon.fillStyle = color;
+
+		var gapsize = gap * scale;
+		var margsize = (scale-gapsize-thickness)/2;
+		var lines = [];
+		lines[0] = [ margsize , 0 , thickness , scale ];
+		lines[1] = [ margsize+gapsize , 0 , thickness , scale ];
+		lines[2] = [ 0 , margsize , scale , thickness ];
+		lines[3] = [ 0 , margsize+gapsize , scale , thickness ];
+
+		for(i=0; i<4; i++)
+		{
+			cancon.fillRect( lines[i][0]+posx , lines[i][1]+posy , lines[i][2] , lines[i][3] );
+		}
+
+		cancon.fillStyle = saveColor;
+		 
+	}
+
+	function drawCircle(canv,pen,color,n,r,x,y){
+		var cancon = canv.getContext("2d");
+		var saveColor = cancon.fillStyle;
+		cancon.fillStyle = color;
+
+		var v = 2 * Math.PI/n;
+
+		var xp=0; var yp=0; var ang=0;
+
+		for(i=0; i<n; i++){
+			ang = i * v;
+			xp = r * Math.cos(ang) + x;
+			yp = r * Math.sin(ang) + y;
+			cancon.fillRect(xp,yp,pen,pen);
+		}
+
+		cancon.fillStyle = saveColor;
+	}
+	function setupListener(d){
+        function phi(ev,re,v){ // v:=3/scale
+		var tmp0 = Math.floor((ev.pageX-re.left)*v);
+		if(tmp0<0 || tmp0>=3) return -1;
+		var tmp1 = Math.floor((ev.pageY-re.top)*v);
+		if(tmp1<0 || tmp1>=3) return -1;
+		return tmp0+(3*tmp1);
+	} 
+	function foo(event){
+		var rect = d.canv.getBoundingClientRect();
+		var val = 3/d.brdSp.sc;
+		var res = phi(event,rect,val);
+		if(res!=-1) chooseMove(res);
+	}
+	d.canv.addEventListener("click",foo);
+    }
+
+	</script>
+<script>
+console.log("RUNNING SCRIPT 02");
+
+var canv = document.getElementById("theCanv");
+var color = 'rgb(0,0,0)';
+var th1 = 1; var th2 = 1;
+var res = 99999;
+var size = 300;
+var scaler = 1/2;
+var px = 20; var py = 10;
+var dsps = tools.mkDrawSpecs(canv,color,color,th1,th2,res,size,scaler,px,py);
+setupListener(dsps);
+
+tools.drawBoard(dsps);
+
+
+
+</script>
+
+
+
+<script>
+console.log("RUNNING SCRIPT 03");
+var cPlayer = {
+			innerState:{ code:"start" , tran:{f:[0,1,2,3,4,5,6,7,8],finv:[0,1,2,3,4,5,6,7,8]} },
+			reset:function(){ this.innerState = { code:"start" , tran:{f:[0,1,2,3,4,5,6,7,8],finv:[0,1,2,3,4,5,6,7,8]} }; },
+			utils:
+			{
+				addTrans:function(a,b){
+					function foo(x,y){
+						var r = [];
+						for(i=0;i<9;i++) r[i]=y[x[i]];
+						return r;
+					}
+					var x = foo(a.f,b.f);
+					var y = foo(b.finv,a.finv);
+					return {f:x,finv:y};
+				},
+				clkWise:function(){ return {f:[2,5,8,1,4,7,0,3,6],finv:[6,3,0,7,4,1,8,5,2]}; },
+				cclkWise:function(){ var x = this.clkWise(); return { f:x.finv , finv:x.f }; },
+				flipV:function(){ return {f:[2,1,0,5,4,3,8,7,6],finv:[2,1,0,5,4,3,8,7,6]}; },
+				mkTransStr:function(s,t){
+					return {
+							str:s, tran:t,
+							get:function(i){ return this.str.charAt( this.tran.finv[i] ); },
+							put:function(i,c){ 
+								function setChar(s,x,i){ return s.substring(0,i) + x + s.substring(i+1); }
+								var j = this.tran.finv[i];
+								this.str = setChar(this.str,c,j);
+							},
+							f:function(i){ return this.tran.f[i]; },
+							finv:function(i){ return this.tran.finv[i]; }
+						};
+				},
+				pattern_strat:function(lastMv,innerState,gameState){
+                                    spacer = "     ";
+                                    console.log("BEGIN : patternGame");
+                                    
+                                    console.log(spacer + "lastMv=" + lastMv);
+                                    
+                                    v = innerState.tran.f[lastMv];
+                                    console.log(spacer + "perform : v = innerState.tran.f[lastMv];"); console.log(spacer + "res : v=" + v);
+                                    
+                                    a = innerState.pattern.p[innerState.pattern.i];
+                                    console.log(spacer + "a = innerState.pattern.p[innerState.pattern.i];"); console.log(spacer + "res : a=" + a);
+                                    
+                                    b = innerState.pattern.p[innerState.pattern.i + 1];
+                                    console.log(spacer + "perform : b = innerState.pattern.p[innerState.pattern.i + 1];"); console.log(spacer + "res : b=" + b);
+                                    
+                                    c = v==a ? b : a;
+                                    console.log(spacer + "perform : c = v==a ? b : a;"); console.log(spacer + "res : c=" + c);
+                                    
+                                    c = innerState.tran.finv[c];
+                                    console.log(spacer + "perform : c = innerState.tran.finv[c];"); console.log(spacer + "res c=: " + c);
+                                    
+                                    innerState.pattern.i+=2;
+                                    
+                                    console.log(spacer + "return : " + c);
+                                    console.log("END");
+                                    return c;
+				},
+				general_strat:function(lastMv,innerState,gameState){
+                                    var r = innerState.rules[ innerState.tran.f[lastMv] ];
+                                    output = innerState.tran.finv[ r.mv ];
+                                    innerState.code = r.nxtCode;
+                                    r.aug(innerState);
+                                    return output;
+				},
+				start_strat:function(lastMv,innerState,gameState){
+					if(lastMv==4)
+					{
+						innerState.code = "Move3|haveDiag";
+						return 0;
+					}
+					else
+					{
+						innerState.code = "Move3|haveCenter";
+						return 4;
+					}
+				},
+				mv3_haveCenter_strat:function(lastMv,innerState,gameState){
+					function assess(s){ 
+						function foo(flag)
+						{
+							var output = [-1,-1,0]; 
+							var lst = flag ? [0,2,6,8] : [1,3,5,7];
+							for(i=0;i<4;i++) if( s.charAt(lst[i])!='-' ) output[ output[2]++ ]=lst[i];
+							return output;
+						}
+						function d0_case(x){
+							var output = {};
+							var v = foo(false);
+							var cd = v[0]*10 + v[1];
+							switch(cd){
+								case 13:
+									output.code = "0-d|angle";
+									output.tran = cPlayer.utils.flipV();
+									output.hasTran = true;
+									break;
+								case 15:
+									output.code = "0-d|angle";
+									output.hasTran = false;
+									break;
+								case 17:
+									output.code = "0-d|across";
+									output.hasTran = false;
+									break;
+								case 35:
+									output.code = "0-d|across";
+									output.tran = cPlayer.utils.clkWise();
+									output.hasTran = true;
+									break;
+								case 37:
+									output.code = "0-d|angle";
+									output.tran = cPlayer.utils.addTrans( cPlayer.utils.clkWise() , cPlayer.utils.flipV() );
+									output.hasTran = true; 
+									break;
+								case 57: 
+									output.code = "0-d|angle";
+									output.tran = cPlayer.utils.cclkWise();
+									output.hasTran = true;
+									break;	
+							}
+							return output;
+						}
+						function d1_case(x){
+							var t={}; var noTransUsed=true;
+							switch(x[0])
+							{
+								case 0: t={f:[0,1,2,3,4,5,6,7,8],finv:[0,1,2,3,4,5,6,7,8]}; break;
+								case 2: t=cPlayer.utils.cclkWise(); noTransUsed=false; break;
+								case 6: t=cPlayer.utils.clkWise(); noTransUsed=false; break;
+								case 8: t=cPlayer.utils.addTrans( cPlayer.utils.clkWise() , cPlayer.utils.clkWise() );noTransUsed=false; break;
+							}
+							var v = cPlayer.utils.mkTransStr(s,t);
+							function showBoard(v){
+                                                            // temporary function for debugging
+                                                            function foo(v,i){
+                                                                s="";
+                                                                for(j=0;j<3;j++) s=s+v.get(i+j);//s=s+v.str.charAt(v.tran.finv[i+j]);
+                                                                return s+'\n';
+                                                            }
+                                                            s  = foo(v,0)+foo(v,3)+foo(v,6)+"Asdf";
+                                                            console.log("x[0]="+x[0]);
+                                                            console.log(s);
+							}
+							//console.log( v.get(1)+","+v.get(3)+","+v.get(5)+","+v.get(7) );
+							showBoard(v);
+							if( v.get(1)!='-' )
+							{
+								var output={ code:"1-d|A" , hasTran:!noTransUsed };
+								if( output.hasTran ) output.tran = v.tran;
+								return output;
+							}
+							if( v.get(3)!='-' )
+							{
+								var newTran = cPlayer.utils.addTrans( cPlayer.utils.clkWise() , cPlayer.utils.flipV() );
+								newTran = cPlayer.utils.addTrans( v.tran , newTran );
+								var output={ code:"1-d|A" , hasTran:true , tran:newTran };
+								return output;
+							}
+							if( v.get(5)!='-' )
+							{
+								var output={ code:"1-d|B" , hasTran:!noTransUsed };
+								if( output.hasTran ) output.tran = v.tran;
+								return output;
+							}
+							if( v.get(7)!='-' )
+							{
+								var newTran = cPlayer.utils.addTrans( cPlayer.utils.clkWise() , cPlayer.utils.flipV() );
+								newTran = cPlayer.utils.addTrans( v.tran , newTran );
+								var output={ code:"1-d|B" , hasTran:true , tran:newTran };
+								return output;
+							}
+						}
+						function d2_case(x){ // [0,2,6,8]
+							v = x[0]*10+x[1];
+							if( v==8 || v==26 ){ 
+								output = { code:"2-d|A" , hasTran:v==26 };
+								if(output.hasTran) output.tran = cPlayer.utils.addTrans(cPlayer.utils.clkWise(),cPlayer.utils.clkWise());
+								return output;
+							}
+							else{
+								output = { code:"2-d|B" , hasTran:v!=2 };
+								switch(v){
+									case 2: break;
+									case 6: output.tran = cPlayer.utils.clkWise(); break;
+									case 28: output.tran = cPlayer.utils.cclkWise(); break;
+									case 68:  output.tran = cPlayer.utils.addTrans(cPlayer.utils.clkWise(),cPlayer.utils.clkWise()); break;
+								}
+								return output;
+							}
+						}
+						var x = foo(true);
+						switch(x[2]){ case 0:return d0_case(x); case 1: return d1_case(x); case 2:return d2_case(x); }
+					}
+					var v = assess(gameState.table);
+					if(v.hasTran) innerState.tran = v.tran;
+					var tstr = this.mkTransStr(gameState.table,innerState.tran);
+					switch(v.code)
+					{
+						case "0-d|angle" : 
+							innerState.code="patternGame";
+							innerState.pattern = {p:[6,8,0,3],i:0};
+							return tstr.finv(2);
+						case "0-d|across" : 
+							innerState.code="patternGame";
+							innerState.pattern = { p:[2,0,3,8],i:0 };
+							return tstr.finv(6);
+						case "1-d|A" : 
+							innerState.code="patternGame";
+							innerState.pattern = { p:[6,3,5,7],i:0 };
+							return tstr.finv(2);
+						case "1-d|B" : 
+							innerState.code="patternGame";
+							innerState.pattern = { p:[1,2,6,3],i:0 };
+							return tstr.finv(7);
+						case "2-d|A" : 
+							innerState.code="patternGame";
+							innerState.pattern = { p:[7,6,2,5],i:0 };
+							return tstr.finv(1);
+						case "2-d|B" : 
+							innerState.code="patternGame";
+							innerState.pattern = { p:[7,3,5,8],i:0 };
+							return tstr.finv(1);
+							
+					}
+					
+				},
+                                mv3_haveDiag_strat:function(lastMv,innerState,gameState){
+                                    function assess(){
+                                        console.log("note(line:416) : lastMv="+lastMv);
+                                        ind = lastMv;
+                                        if(ind==3 || ind==6 || ind==7){ 
+                                            var tmpTran = cPlayer.utils.addTrans( cPlayer.utils.flipV() , cPlayer.utils.cclkWise() );
+                                            console.log("tmpTran=("+tmpTran.f+"|"+tmpTran.finv+")");
+                                            var newTran = cPlayer.utils.addTrans( innerState.tran , tmpTran );
+                                            ind = tmpTran.f[ind];
+                                            innerState.tran = newTran;
+                                        }
+                                        switch(ind)
+                                        {
+                                            case 1:return "r-case";
+                                            case 2:return "rr-case";
+                                            case 5:return "rrd-case";
+                                            case 8:return "rrdd-case";
+                                        }
+                                    }
+                                    function r_case(){
+                                        innerState.code = "generalGame";
+                                        
+                                        innerState.rules = {
+                                            2:{
+                                                mv:6, nxtCode:"patternGame", 
+                                                aug:function(innerState){
+                                                    innerState.pattern = {p:[3,8],i:0};
+                                                }
+                                            },
+                                            3:{
+                                                mv:5, nxtCode:"patternGame", 
+                                                aug:function(innerState){
+                                                    innerState.pattern = {p:[2,6],i:0};
+                                                }
+                                            },
+                                            5:{
+                                                mv:3, nxtCode:"patternGame", 
+                                                aug:function(innerState){
+                                                    innerState.pattern = {p:[6,2],i:0};
+                                                }
+                                            },
+                                            6:{
+                                                mv:2, nxtCode:"patternGame", 
+                                                aug:function(innerState){
+                                                    innerState.pattern = {p:[3,5],i:0};
+                                                }
+                                            },
+                                            8:{
+                                                mv:3, nxtCode:"patternGame", 
+                                                aug:function(innerState){
+                                                    innerState.pattern = {p:[6,2],i:0};
+                                                }
+                                            },
+                                        };
+                                        
+                                        return innerState.tran.finv[7];
+                                    }
+                                    function rr_case(){
+                                        
+                                        innerState.code = "patternGame";
+                                        innerState.pattern = {p:[3,5,7,1],i:0};
+                                        return innerState.tran.finv[6];
+                                    }
+                                    function rrd_case(){
+                                        innerState.code = "patternGame";
+                                        innerState.pattern = {p:[6,2,1,7],i:0};
+                                        return innerState.tran.finv[3];
+                                    }
+                                    function rrdd_case(){
+                                        innerState.code = "patternGame";
+                                        innerState.pattern = {p:[1,7,3,4],i:0};
+                                        return innerState.tran.finv[2];
+                                    }
+                                    
+                                    var v = assess();
+                                    switch(v){
+                                        case "r-case" : return r_case();
+                                        case "rr-case" : return rr_case();
+                                        case "rrd-case" : return rrd_case();
+                                        case "rrdd-case" : return rrdd_case();
+                                    }
+                                }
+			},
+			Qmove:function(lastMv,gameState)
+			{
+				// lastMv == -1 if and only if this is the first turn.
+				// if the game is already over, then return -1.
+				if(gameState.gameStatus!=0) return -1;
+				console.log("NOTE : code=["+this.innerState.code+"] in Qmove");
+				switch(this.innerState.code){
+                                    case "patternGame" : return this.utils.pattern_strat(lastMv,this.innerState,gameState);
+                                    case "generalGame" : return this.utils.general_strat(lastMv,this.innerState,gameState);
+                                    case "start" : return this.utils.start_strat(lastMv,this.innerState,gameState);
+                                    case "Move3|haveCenter" : return this.utils.mv3_haveCenter_strat(lastMv,this.innerState,gameState);
+                                    case "Move3|haveDiag" : return this.utils.mv3_haveDiag_strat(lastMv,this.innerState,gameState);
+				} 
+				console.log("OOPS : no output returned in cPlayer.Qmove");
+			}
+              };
+              
+              
+             
+
+</script>
+
+<script>
+console.log("RUNNING SCRIPT 04");
+
+	function chooseMove(i){
+			var c = board.turn;
+			board.pick(i);
+			if(board.turn==c) return;
+			if(c=='o') tools.drawO(dsps,i); else tools.drawX(dsps,i);
+			checkForGameOver(i);
+			switch(board.gameStatus)
+			{
+				case 0: break;
+				case 1: console.log("cat's game!"); break;
+				case 2: console.log("x wins!"); break;
+				case 3: console.log("o wins!"); break;
+			}
+			var computerMove = cPlayer.Qmove(i,board);
+			if(computerMove==null) { console.log("WARNING : LINE 563"); }
+			if(computerMove!=-1)
+			{
+				c = board.turn;
+				board.pick(computerMove);
+				if(c=='o') tools.drawO(dsps,computerMove); else tools.drawX(dsps,computerMove);
+				checkForGameOver(computerMove);
+				switch(board.gameStatus)
+				{
+					case 0: break;
+					case 1: console.log("cat's game!"); break;
+					case 2: console.log("x wins!"); break;
+					case 3: console.log("o wins!"); break;
+				}
+			}
+		}
+
+	var board = {
+        	        table : "---------",
+			turn : 'x',
+			gameStatus:0, // 0:=notDone , 1:=cat'sGame , 2:=xWins , 3:=oWins
+			moveCount:0,
+			winDetails:null, // the value returned by checkForWin, once a winner is declaired
+			pick :function(n){
+				function setChar(s,x,i){ return s.substring(0,i) + x + s.substring(i+1); }
+				if( this.table.charAt(n)!='-' || this.gameStatus!=0 ) return;
+				this.table = setChar(this.table,this.turn,n);
+				this.turn = this.turn=='o' ? 'x' : 'o';
+				this.moveCount++;
+			},
+			
+			reset:function(){
+                            this.table = "---------";
+                            this.gameStatus = 0;
+                            this.moveCount = 0;
+                            this.winDetails = null;
+			}
+			
+        	    };
+
+	function checkForGameOver(n){
+		// n is the last move taken as an integer
+		var v = checkForWin(n);
+		if(v.winFound)
+		{
+			board.gameStatus = v.winner=='o' ? 3 : 2;
+			board.winDetails = v;
+		}
+		else if( board.moveCount==9 ){ board.gameStatus=1; }
+	}
+
+	function checkForWin(n){
+	
+		function getSq(s,ij){
+			if(ij[0]<0 || ij[0]>2 || ij[1]<0 || ij[1]>2) return '-';
+			return s.charAt(ij[0]+(3*ij[1]));
+		}	
+		function add(scaler,a,b){
+			return [ a[0]+( scaler*b[0] ) , a[1]+( scaler*b[1] ) ];
+		}
+		function toNum(ij){ return ij[0]+(3*ij[1]); }
+		function lastStep(winner,a,b,c){ return {winFound:true , ThreeInARow:[toNum(a),toNum(b),toNum(c)] , winner:winner }; }
+		var t = board.table;
+		var c = t.charAt(n);
+		var point = [ n%3 , Math.floor(n/3) ];
+		var lst = [ [-1,1],[1,1],[1,0],[0,1] ];
+
+		var tmp0=[] ; var tmp1=[] ;
+
+		for(i=0; i<4; i++)
+		{
+			var delta = lst[i];
+			var index = "##|##";
+			var notDone = true;
+			while(notDone)
+			{
+				switch(index)
+				{
+					case "done" : notDone=false; break;
+					case "##|##" : 
+						tmp0 = add(1,point,delta)
+						index = getSq(t,tmp0)==c ? "#1|##" : "#0|##";
+						break;
+					case "#1|##" : 
+						tmp1 = add(2,point,delta);
+						index = getSq(t,tmp1)==c ? "11|##" : "01|##";
+						break;
+					case "11|##" : return lastStep(c,tmp1,tmp0,point);
+					case "#0|##" : 
+						tmp0 = add(-1,point,delta);
+						index = getSq(t,tmp0)==c ? "#0|1#" : "done";
+						break;
+					case "01|##" : 
+						tmp1 = add(-1,point,delta);
+						index = getSq(t,tmp1)==c ? "01|1#" : "done";
+						break;
+					case "#0|1#" : 
+						tmp1 = add(-2,point,delta);
+						index = getSq(t,tmp1)==c ? "#0|11" : "done";
+						break;
+					case "01|1#" : return lastStep(c,tmp0,point,tmp1);
+					case "#0|11" : return lastStep(c,point,tmp0,tmp1);
+						
+				}
+			}
+		} 
+		
+		return {winFound:false};
+	}
+
+
+</script>
+
+
+ 
+
+
+
