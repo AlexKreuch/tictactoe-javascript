@@ -2,10 +2,44 @@
 <div>
 <canvas id="theCanv" height="400" usemap="#theMap" ></canvas>
 </div>
-
+<button id="resetButton" onclick="resetGame(board,cPlayer,dsps)">Reset</button>
+<h3 id="outcomeBox"></h3>
 
 
 	<script>
+            console.log("RUNNING SCRIPT 00");
+            function resetGame(board,cPlayer,dsps){
+                function eraseTable(){
+                    
+                    var cancon = dsps.canv.getContext("2d");
+                    
+                    var px = dsps.brdSp.px;
+                    var py = dsps.brdSp.py;
+                    
+                    var sc = dsps.brdSp.sc;
+                    var th = dsps.brdSp.th;
+                    var gs = dsps.brdSp.ga * sc;
+                    var ms = (sc-gs-th)/2;
+                    
+                    var L0 = [0,ms+th,sc-ms];
+                    var L1 = [ ms , sc-2*ms-2*th , ms ];
+                    
+                    for(i=0;i<3;i++)for(j=0;j<3;j++) 
+                        cancon.clearRect(px+L0[i] , py+L0[j] , L1[i] , L1[j] );
+                    
+                    
+                    
+                }
+                eraseTable();
+                board.reset();
+                cPlayer.reset();
+                document.getElementById("outcomeBox").innerHTML = "";
+            }
+	</script>
+
+	<script>
+	
+	
 
 	console.log("RUNNING SCRIPT 01");
 	var tools = {
@@ -163,7 +197,9 @@
     }
 
 	</script>
-<script>
+
+	
+	<script>
 console.log("RUNNING SCRIPT 02");
 
 var canv = document.getElementById("theCanv");
@@ -362,7 +398,7 @@ var cPlayer = {
 							v = x[0]*10+x[1];
 							if( v==8 || v==26 ){ 
 								output = { code:"2-d|A" , hasTran:v==26 };
-								if(output.hasTran) output.tran = cPlayer.utils.addTrans(cPlayer.utils.clkWise(),cPlayer.utils.clkWise());
+								if(output.hasTran) output.tran = cPlayer.utils.clkWise();
 								return output;
 							}
 							else{
@@ -521,6 +557,9 @@ var cPlayer = {
 console.log("RUNNING SCRIPT 04");
 
 	function chooseMove(i){
+                        function setDisplayText(s){
+                            document.getElementById("outcomeBox").innerHTML = s;
+                        }
 			var c = board.turn;
 			board.pick(i);
 			if(board.turn==c) return;
@@ -529,9 +568,9 @@ console.log("RUNNING SCRIPT 04");
 			switch(board.gameStatus)
 			{
 				case 0: break;
-				case 1: console.log("cat's game!"); break;
-				case 2: console.log("x wins!"); break;
-				case 3: console.log("o wins!"); break;
+				case 1: setDisplayText("cat's game!"); break;
+				case 2: setDisplayText("x wins!"); break;
+				case 3: setDisplayText("o wins!"); break;
 			}
 			var computerMove = cPlayer.Qmove(i,board);
 			if(computerMove==null) { console.log("WARNING : LINE 563"); }
@@ -543,10 +582,11 @@ console.log("RUNNING SCRIPT 04");
 				checkForGameOver(computerMove);
 				switch(board.gameStatus)
 				{
+				
 					case 0: break;
-					case 1: console.log("cat's game!"); break;
-					case 2: console.log("x wins!"); break;
-					case 3: console.log("o wins!"); break;
+					case 1: setDisplayText("cat's game!"); break;
+					case 2: setDisplayText("x wins!"); break;
+					case 3: setDisplayText("o wins!"); break;
 				}
 			}
 		}
@@ -567,6 +607,7 @@ console.log("RUNNING SCRIPT 04");
 			
 			reset:function(){
                             this.table = "---------";
+                            this.turn = 'x';
                             this.gameStatus = 0;
                             this.moveCount = 0;
                             this.winDetails = null;
