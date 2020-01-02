@@ -1,3 +1,5 @@
+# Steps to deploying my TicTacToe game on an AWS server.
+
 created AWS account
 
 created : EC2 t2.micro instance (ubuntu 16.04) (free-tier)  ( downloaded pem-file )
