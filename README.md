@@ -2,7 +2,7 @@
 
 created AWS account
 
-created : EC2 t2.micro instance (ubuntu 16.04) (free-tier)  (downloaded pem-file) [now longer active]
+created : EC2 t2.micro instance (ubuntu 16.04) (free-tier)  (downloaded pem-file) [no longer active]
 
 used ssh to log onto the system via the command : <br/>
 &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;ssh -i "ec2Instances000.pem" ubuntu@ec2-35-161-140-144.us-west-2.compute.amazonaws.com
