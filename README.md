@@ -11,5 +11,5 @@ installed nginx on the virtual machine
 
 replaced default nginx.html file with my javascript program
 
-Now when you navigate to my virtual machine public IP address from a browser, 
-the nginx server will send the the default webpage containing my javascript game.
+When you navigated to my virtual machine public IP address from a browser, 
+the nginx server would send the the default webpage containing my javascript game.
